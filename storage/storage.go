@@ -3,18 +3,28 @@ package storage
 import (
 	"database/sql"
 	"fmt"
-	"os"
-	"time"
 
+	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	_ "modernc.org/sqlite"
 )
 
+/*
 type Task struct {
 	ID      string `json:"id"`
 	Date    string `json:"date"` // omitempty
 	Title   string `json:"title"`
 	Comment string `json:"comment"` // omitempty
 	Repeat  string `json:"repeat"`  // omitempty
+}
+*/
+
+type Task struct {
+	ID      int64  `pg:"id,pk"   json:"id"`
+	Date    string `pg:"date"    json:"date"` // omitempty
+	Title   string `pg:"title"   json:"title"`
+	Comment string `pg:"comment" json:"comment"` // omitempty
+	Repeat  string `pg:"repeat"  json:"repeat"`  // omitempty
 }
 
 const (
@@ -23,57 +33,84 @@ const (
 )
 
 type TaskStore struct {
-	DB *sql.DB
+	DB *pg.DB
 }
 
-func NewTaskStore(db *sql.DB) TaskStore {
+func NewTaskStore(db *pg.DB) TaskStore {
 	return TaskStore{DB: db}
 }
 
-func (ts TaskStore) Add(task Task) (sql.Result, error) {
-	return ts.DB.Exec("INSERT INTO scheduler(date, title, comment, repeat) VALUES (?, ?, ?, ?) ",
-		task.Date, task.Title, task.Comment, task.Repeat)
+func (ts TaskStore) Add(task Task) (orm.Result, error) {
+	/*
+		return ts.DB.Exec("INSERT INTO scheduler(date, title, comment, repeat) VALUES (?, ?, ?, ?) ",
+			task.Date, task.Title, task.Comment, task.Repeat)
+	*/
+	ti := &Task{
+		Date:    task.Date,
+		Title:   task.Title,
+		Comment: task.Comment,
+		Repeat:  task.Repeat,
+	}
+	ormr, err := ts.DB.Model(ti).Insert()
+	return ormr, err
+	// return nil, nil
 }
 
-func (ts TaskStore) Delete(id string) (sql.Result, error) {
-	return ts.DB.Exec("DELETE FROM scheduler WHERE id = :id", sql.Named("id", id))
+/*
+	func (ts TaskStore) Delete(id string) (orm.Result, error) {
+		//	return ts.DB.Exec("DELETE FROM scheduler WHERE id = :id", sql.Named("id", id))
+		return nil, nil
+	}
+*/
+func (ts TaskStore) Delete(id int64) (orm.Result, error) {
+	//	return ts.DB.Exec("DELETE FROM scheduler WHERE id = :id", sql.Named("id", id))
+	return nil, nil
 }
 
 func (ts TaskStore) Find(search string) (*sql.Rows, error) {
 	// возвращаем всё если строка пустая
-	if len(search) == 0 {
-		return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date LIMIT :limit",
-			sql.Named("limit", 50))
-	}
-	// парсим строку на дату
-	if date, err := time.Parse("02-01-2006", search); err == nil {
-		// дата есть
-		return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler WHERE date = :date LIMIT :limit",
-			sql.Named("date", date.Format(templ)),
-			sql.Named("limit", limit))
-	} else {
-		// даты нет
-		search = "%" + search + "%"
-		return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler WHERE UPPER(title) LIKE UPPER(:search) OR UPPER(comment) LIKE UPPER(:search) ORDER BY date LIMIT :limit",
-			sql.Named("search", search),
-			sql.Named("limit", limit))
-	}
+	/*
+		if len(search) == 0 {
+			return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date LIMIT :limit",
+				sql.Named("limit", 50))
+		}
+		// парсим строку на дату
+		if date, err := time.Parse("02-01-2006", search); err == nil {
+			// дата есть
+			return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler WHERE date = :date LIMIT :limit",
+				sql.Named("date", date.Format(templ)),
+				sql.Named("limit", limit))
+		} else {
+			// даты нет
+			search = "%" + search + "%"
+			return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler WHERE UPPER(title) LIKE UPPER(:search) OR UPPER(comment) LIKE UPPER(:search) ORDER BY date LIMIT :limit",
+				sql.Named("search", search),
+				sql.Named("limit", limit))
+		}
+	*/
+	return nil, nil
 }
 
-func (ts TaskStore) Get(id string) (Task, error) {
-	row := ts.DB.QueryRow("SELECT * FROM scheduler WHERE id = :id", sql.Named("id", id))
-	task := Task{}
-	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
-	return task, err
+func (ts TaskStore) Get(id int64) (Task, error) {
+	/*
+		row := ts.DB.QueryRow("SELECT * FROM scheduler WHERE id = :id", sql.Named("id", id))
+		task := Task{}
+		err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		return task, err
+	*/
+	return Task{}, nil
 }
 
 func (ts TaskStore) Update(task Task) (sql.Result, error) {
-	return ts.DB.Exec("UPDATE scheduler SET  date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id",
-		sql.Named("id", task.ID),
-		sql.Named("date", task.Date),
-		sql.Named("title", task.Title),
-		sql.Named("comment", task.Comment),
-		sql.Named("repeat", task.Repeat))
+	/*
+		return ts.DB.Exec("UPDATE scheduler SET  date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id",
+			sql.Named("id", task.ID),
+			sql.Named("date", task.Date),
+			sql.Named("title", task.Title),
+			sql.Named("comment", task.Comment),
+			sql.Named("repeat", task.Repeat))
+	*/
+	return nil, nil
 }
 
 var schemaSQL string = `
@@ -90,35 +127,25 @@ CREATE INDEX idx_title ON scheduler (title);
 
 var DBFileRun = "scheduler.db"
 
-func InitDBase() (*sql.DB, error) {
-	var SqlDB *sql.DB
-	var StrDBFile string
+func InitDBase() (*pg.DB, error) {
+	var pgDB *pg.DB
 	fmt.Println("Init Data Base...")
-	envDBFile := os.Getenv("TODO_DBFILE")
-	if envDBFile == "" {
-		envDBFile = DBFileRun
-		//envDBFile = tests.DBFile
-	}
-	fmt.Println("Result DBFile ", envDBFile)
-	_, err := os.Stat(envDBFile)
-	install := (err != nil)
-	fmt.Println("Need install ", install)
-	StrDBFile = envDBFile
-	SqlDB, err = sql.Open("sqlite", StrDBFile)
-	if err != nil {
-		fmt.Println("InitDB err:", err)
-		return SqlDB, err
-	}
-	if install {
-		if _, err = SqlDB.Exec(schemaSQL); err != nil {
-			fmt.Println("InitDB err:", err)
-			// SqlDB = nil
-			return SqlDB, err
-		}
-	}
-	SqlDB.SetMaxIdleConns(5) //2
-	SqlDB.SetMaxOpenConns(5)
-	SqlDB.SetConnMaxIdleTime(time.Minute * 5)
-	SqlDB.SetConnMaxLifetime(time.Hour)
-	return SqlDB, err
+	pgDB = pg.Connect(&pg.Options{
+		Addr:     "localhost:5432",
+		User:     "postgres",
+		Password: "password",
+		Database: "scheduler",
+	})
+
+	err := createSchema(pgDB, (*Task)(nil))
+
+	return pgDB, err
+}
+
+func createSchema(db *pg.DB, model ...interface{}) error {
+
+	return db.Model(model...).CreateTable(&orm.CreateTableOptions{
+		IfNotExists: true,
+	})
+
 }
