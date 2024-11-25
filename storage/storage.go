@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
@@ -114,7 +116,7 @@ func (ts TaskStore) Update(task Task) (sql.Result, error) {
 }
 
 var schemaSQL string = `
-CREATE TABLE scheduler (
+CREATE TABLE IF NOT EXIST scheduler (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date CHAR(8) NOT NULL DEFAULT "20000101", 
     title VARCHAR(32) NOT NULL DEFAULT "",
@@ -125,19 +127,42 @@ CREATE INDEX idx_date ON scheduler (date);
 CREATE INDEX idx_title ON scheduler (title); 
 `
 
+var createTableQuery string = `
+		CREATE TABLE IF NOT EXISTS books (
+			id SERIAL PRIMARY KEY,
+			title TEXT NOT NULL,
+			author TEXT NOT NULL,
+			published_date DATE,
+			price NUMERIC(10, 2)
+		);
+`
+
 var DBFileRun = "scheduler.db"
 
-func InitDBase() (*pg.DB, error) {
+func InitDBase(ctx context.Context) (*pg.DB, error) {
 	var pgDB *pg.DB
 	fmt.Println("Init Data Base...")
 	pgDB = pg.Connect(&pg.Options{
 		Addr:     "localhost:5432",
 		User:     "postgres",
 		Password: "password",
-		Database: "scheduler",
+		Database: "dbscheduler",
 	})
 
-	err := createSchema(pgDB, (*Task)(nil))
+	//	ctx := context.Background()
+	if err := pgDB.Ping(ctx); err != nil {
+		log.Fatalf("Ошибка подключения к базе данных: %v", err)
+		return nil, err
+	}
+
+	_, err := pgDB.Exec(ctx, createTableQuery)
+
+	if err != nil {
+		log.Fatalf("Ошибка создания таблицы: %v", err)
+		return nil, err
+	}
+
+	//	err := createSchema(pgDB, (*Task)(nil))
 
 	return pgDB, err
 }

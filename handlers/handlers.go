@@ -319,8 +319,10 @@ func TaskPOSTHandle(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		bId.Id = strconv.Itoa(int(id))
+		// запросить вставленную запись
+		// ID поставить вместо нуля дальше
 	*/
-	bId.Id = "0"
+	bId.Id = "0" // сюда
 	arrBytes, err := json.Marshal(bId)
 	if err != nil {
 		retError(res, fmt.Sprintf("Ts POST: Ошибка json.Marshal(id): %v\n", err), http.StatusOK)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -22,7 +23,8 @@ var (
 func main() {
 	// инициализация сервиса и хранилища
 	// открытие БД
-	if db, err = storage.InitDBase(); err != nil {
+	ctx := context.Background()
+	if db, err = storage.InitDBase(ctx); err != nil {
 		fmt.Printf("Ошибка открытия базы %v\n", err)
 		panic(err)
 	}
