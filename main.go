@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -23,13 +22,12 @@ var (
 func main() {
 	// инициализация сервиса и хранилища
 	// открытие БД
-	ctx := context.Background()
-	if db, err = storage.InitDBase(ctx); err != nil {
+	if db, err = storage.InitDBase(); err != nil {
 		fmt.Printf("Ошибка открытия базы %v\n", err)
 		panic(err)
 	}
 	defer db.Close()
-	return
+	//return
 
 	store := storage.NewTaskStore(db)
 	service.Service = service.NewTaskService(store)
@@ -45,6 +43,7 @@ func main() {
 	*/
 
 	mux.HandleFunc("/api/task", handlers.TaskHandle)
+	mux.HandleFunc("/api/tasks", handlers.TasksHandle)
 	/*
 		mux.HandleFunc("/api/task/done", handlers.TaskDoneHandle)
 		mux.HandleFunc("/api/tasks", handlers.TasksHandle)

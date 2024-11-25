@@ -30,15 +30,15 @@ func (ts TaskService) Add(task storage.Task) (orm.Result, error) {
 		return ts.store.Delete(id)
 	}
 */
-func (ts TaskService) Delete(id int64) (orm.Result, error) {
+func (ts TaskService) Delete(id int) (orm.Result, error) {
 	return ts.store.Delete(id)
 }
 
-func (ts TaskService) Find(search string) (*sql.Rows, error) {
+func (ts TaskService) Find(search string) ([]storage.Task, orm.Result, error) {
 	return ts.store.Find(search)
 }
 
-func (ts TaskService) Get(id int64) (storage.Task, error) {
+func (ts TaskService) Get(id int) (storage.Task, error) {
 	return ts.store.Get(id)
 }
 
@@ -46,7 +46,7 @@ func (ts TaskService) Update(task storage.Task) (sql.Result, error) {
 	return ts.store.Update(task)
 }
 
-func (ts TaskService) Done(id int64) error {
+func (ts TaskService) Done(id int) error {
 	// выполнение задачи - это перенос либо удаление
 	var task storage.Task
 	var err error
