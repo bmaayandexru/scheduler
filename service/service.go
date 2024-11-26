@@ -4,9 +4,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/bmaayandexru/scheduler/nextdate"
-	"github.com/bmaayandexru/scheduler/storage"
-	"github.com/go-pg/pg/v10/orm"
+	"github.com/bmaayandexru/go_final_project/nextdate"
+	"github.com/bmaayandexru/go_final_project/storage"
 )
 
 type TaskService struct {
@@ -21,24 +20,19 @@ func NewTaskService(store storage.TaskStore) TaskService {
 	return TaskService{store: store}
 }
 
-func (ts TaskService) Add(task storage.Task) (orm.Result, error) {
+func (ts TaskService) Add(task storage.Task) (sql.Result, error) {
 	return ts.store.Add(task)
 }
 
-/*
-	func (ts TaskService) Delete(id string) (orm.Result, error) {
-		return ts.store.Delete(id)
-	}
-*/
-func (ts TaskService) Delete(id int) (orm.Result, error) {
+func (ts TaskService) Delete(id string) (sql.Result, error) {
 	return ts.store.Delete(id)
 }
 
-func (ts TaskService) Find(search string) ([]storage.Task, orm.Result, error) {
+func (ts TaskService) Find(search string) (*sql.Rows, error) {
 	return ts.store.Find(search)
 }
 
-func (ts TaskService) Get(id int) (storage.Task, error) {
+func (ts TaskService) Get(id string) (storage.Task, error) {
 	return ts.store.Get(id)
 }
 
@@ -46,7 +40,7 @@ func (ts TaskService) Update(task storage.Task) (sql.Result, error) {
 	return ts.store.Update(task)
 }
 
-func (ts TaskService) Done(id int) error {
+func (ts TaskService) Done(id string) error {
 	// выполнение задачи - это перенос либо удаление
 	var task storage.Task
 	var err error

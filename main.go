@@ -1,21 +1,20 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
 
-	"github.com/bmaayandexru/scheduler/handlers"
-	"github.com/bmaayandexru/scheduler/service"
-	"github.com/bmaayandexru/scheduler/storage"
-	"github.com/bmaayandexru/scheduler/tests"
-	"github.com/go-pg/pg/v10"
+	"github.com/bmaayandexru/go_final_project/handlers"
+	"github.com/bmaayandexru/go_final_project/service"
+	"github.com/bmaayandexru/go_final_project/storage"
+	"github.com/bmaayandexru/go_final_project/tests"
 )
 
 var (
 	mux *http.ServeMux
-	//db  *sql.DB
-	db  *pg.DB
+	db  *sql.DB
 	err error
 )
 
@@ -27,8 +26,6 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
-	//return
-
 	store := storage.NewTaskStore(db)
 	service.Service = service.NewTaskService(store)
 
@@ -36,19 +33,10 @@ func main() {
 	mux = http.NewServeMux()
 	// вешаем обработчики
 	mux.HandleFunc("/api/nextdate", handlers.NextDateHandle)
-	/*
-		mux.HandleFunc("/api/task", auth(handlers.TaskHandle))
-		mux.HandleFunc("/api/task/done", auth(handlers.TaskDoneHandle))
-		mux.HandleFunc("/api/tasks", auth(handlers.TasksHandle))
-	*/
-
-	mux.HandleFunc("/api/task", handlers.TaskHandle)
-	mux.HandleFunc("/api/tasks", handlers.TasksHandle)
-	/*
-		mux.HandleFunc("/api/task/done", handlers.TaskDoneHandle)
-		mux.HandleFunc("/api/tasks", handlers.TasksHandle)
-		mux.HandleFunc("/api/signin", handlers.SignInHandle)
-	*/
+	mux.HandleFunc("/api/task", auth(handlers.TaskHandle))
+	mux.HandleFunc("/api/task/done", auth(handlers.TaskDoneHandle))
+	mux.HandleFunc("/api/tasks", auth(handlers.TasksHandle))
+	mux.HandleFunc("/api/signin", handlers.SignInHandle)
 	// обеспечиваем интерфейс
 	mux.Handle("/", http.FileServer(http.Dir("web/")))
 	strPort := defStrPort()

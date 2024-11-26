@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"time"
 
-	nd "github.com/bmaayandexru/scheduler/nextdate"
-	"github.com/bmaayandexru/scheduler/service"
-	"github.com/bmaayandexru/scheduler/storage"
+	nd "github.com/bmaayandexru/go_final_project/nextdate"
+	"github.com/bmaayandexru/go_final_project/service"
+	"github.com/bmaayandexru/go_final_project/storage"
 )
 
 // для формирования ошибки
@@ -77,31 +77,28 @@ func retError(res http.ResponseWriter, sErr string, statusCode int) {
 func TasksGETSearch(res http.ResponseWriter, req *http.Request) {
 	search := req.URL.Query().Get("search")
 	// нашли строку
-	//	_, rows, err := service.Service.Find(search)
-	_, _, err := service.Service.Find(search)
+	rows, err := service.Service.Find(search)
 	if err != nil {
 		fmt.Println(err)
 		retError(res, fmt.Sprintf("Ts GET SS: Ошибка запроса: %s\n", err.Error()), http.StatusOK)
 		return
 	}
 	sTasks.Tasks = make([]storage.Task, 0)
-	/*
-		for rows.Next() {
-			task := storage.Task{}
-			err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
-			if err != nil {
-				fmt.Println(err)
-				retError(res, fmt.Sprintf("Ts GET SS: Ошибка rows.Scan(): %s\n", err.Error()), http.StatusOK)
-				return
-			}
-			sTasks.Tasks = append(sTasks.Tasks, task)
-		}
-		if err := rows.Err(); err != nil {
+	for rows.Next() {
+		task := storage.Task{}
+		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
 			fmt.Println(err)
-			retError(res, fmt.Sprintf("Ts GET SS: Ошибка rows.Next(): %s\n", err.Error()), http.StatusOK)
+			retError(res, fmt.Sprintf("Ts GET SS: Ошибка rows.Scan(): %s\n", err.Error()), http.StatusOK)
 			return
 		}
-	*/
+		sTasks.Tasks = append(sTasks.Tasks, task)
+	}
+	if err := rows.Err(); err != nil {
+		fmt.Println(err)
+		retError(res, fmt.Sprintf("Ts GET SS: Ошибка rows.Next(): %s\n", err.Error()), http.StatusOK)
+		return
+	}
 	arrBytes, err := json.Marshal(sTasks)
 	if err != nil {
 		retError(res, fmt.Sprintf("TH GET SS: Ошибка json.Marshal(sTsks): %v\n", err), http.StatusOK)
@@ -113,31 +110,28 @@ func TasksGETSearch(res http.ResponseWriter, req *http.Request) {
 }
 
 func TasksGETAllTasks(res http.ResponseWriter, req *http.Request) {
-	//	_, rows, err := service.Service.Find("")
-	_, _, err := service.Service.Find("")
+	rows, err := service.Service.Find("")
 	if err != nil {
 		fmt.Println(err)
 		retError(res, fmt.Sprintf("Ts GET AT: Ошибка запроса: %s\n", err.Error()), http.StatusOK)
 		return
 	}
 	sTasks.Tasks = make([]storage.Task, 0)
-	/*
-		for rows.Next() {
-			task := storage.Task{}
-			err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
-			if err != nil {
-				fmt.Println(err)
-				retError(res, fmt.Sprintf("Ts GET AT: Ошибка rows.Scan(): %s\n", err.Error()), http.StatusOK)
-				return
-			}
-			sTasks.Tasks = append(sTasks.Tasks, task)
-		}
-		if err := rows.Err(); err != nil {
+	for rows.Next() {
+		task := storage.Task{}
+		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
 			fmt.Println(err)
-			retError(res, fmt.Sprintf("Ts GET AT: Ошибка rows.Next(): %s\n", err.Error()), http.StatusOK)
+			retError(res, fmt.Sprintf("Ts GET AT: Ошибка rows.Scan(): %s\n", err.Error()), http.StatusOK)
 			return
 		}
-	*/
+		sTasks.Tasks = append(sTasks.Tasks, task)
+	}
+	if err := rows.Err(); err != nil {
+		fmt.Println(err)
+		retError(res, fmt.Sprintf("Ts GET AT: Ошибка rows.Next(): %s\n", err.Error()), http.StatusOK)
+		return
+	}
 	arrBytes, err := json.Marshal(sTasks)
 	if err != nil {
 		retError(res, fmt.Sprintf("TH GET AT: Ошибка json.Marshal(sTasks): %v\n", err), http.StatusOK)
@@ -149,13 +143,7 @@ func TasksGETAllTasks(res http.ResponseWriter, req *http.Request) {
 }
 
 func TaskGETHandle(res http.ResponseWriter, req *http.Request) {
-	str_id := req.URL.Query().Get("id")
-	id, err := strconv.Atoi(str_id)
-	if err != nil {
-		fmt.Println(err)
-		retError(res, fmt.Sprintf("Tk GET id: Ошибка: %s\n", err.Error()), http.StatusOK)
-		return
-	}
+	id := req.URL.Query().Get("id")
 	task, err := service.Service.Get(id)
 	if err != nil {
 		fmt.Println(err)
@@ -198,29 +186,26 @@ func TaskPUTHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	// анализ task.ID не пустой, это число, есть в базе,
-	/*
-		if len(task.ID) == 0 { // пустой id
-			retError(res, fmt.Sprintln("Tk PUT: Пустой ID"), http.StatusOK)
-			return
-		}
-		_, err = strconv.Atoi(task.ID)
-		if err != nil { // id не число
-			retError(res, fmt.Sprintln("Tk PUT: ID не число"), http.StatusOK)
-			return
-		}
-		// тут ID строка
-		_, err = service.Service.Get(task.ID)
-		if err != nil { // запрос SELECT * WHERE id = :id не должен вернуть ошибку
-			retError(res, fmt.Sprintf("Tk PUT: ID нет в базе. Ошибка: %v\n", err), http.StatusOK)
-			return
-		}
-		// ID корректный и в базе есть
-		if len(task.Title) == 0 { // Поле Title обязательное
-			retError(res, "Tk PUT: Поле `Задача*` пустое", http.StatusOK)
-			return
-		}
-	*/
-	// !!!!!!!!! чему равен ID
+	if len(task.ID) == 0 { // пустой id
+		retError(res, fmt.Sprintln("Tk PUT: Пустой ID"), http.StatusOK)
+		return
+	}
+	_, err = strconv.Atoi(task.ID)
+	if err != nil { // id не число
+		retError(res, fmt.Sprintln("Tk PUT: ID не число"), http.StatusOK)
+		return
+	}
+	// тут ID строка
+	_, err = service.Service.Get(task.ID)
+	if err != nil { // запрос SELECT * WHERE id = :id не должен вернуть ошибку
+		retError(res, fmt.Sprintf("Tk PUT: ID нет в базе. Ошибка: %v\n", err), http.StatusOK)
+		return
+	}
+	// ID корректный и в базе есть
+	if len(task.Title) == 0 { // Поле Title обязательное
+		retError(res, "Tk PUT: Поле `Задача*` пустое", http.StatusOK)
+		return
+	}
 	if len(task.Date) == 0 { // Если поле date не указано или содержит пустую строку,
 		task.Date = time.Now().Format(template) // берётся сегодняшнее число.
 	} else {
@@ -324,11 +309,8 @@ func TaskPOSTHandle(res http.ResponseWriter, req *http.Request) {
 			retError(res, fmt.Sprintf("Ts POST: Ошибка LastInsetId(): %v\n", err), http.StatusOK)
 			return
 		}
-		bId.Id = strconv.Itoa(int(id))
-		// запросить вставленную запись
-		// ID поставить вместо нуля дальше
 	*/
-	bId.Id = "0" // сюда
+	bId.Id = strconv.Itoa(int(0))
 	arrBytes, err := json.Marshal(bId)
 	if err != nil {
 		retError(res, fmt.Sprintf("Ts POST: Ошибка json.Marshal(id): %v\n", err), http.StatusOK)
@@ -341,33 +323,22 @@ func TaskPOSTHandle(res http.ResponseWriter, req *http.Request) {
 
 func TaskDELETEHandle(res http.ResponseWriter, req *http.Request) {
 	// получить id
-	//*******************
-	str_id := req.URL.Query().Get("id")
-	id, err := strconv.Atoi(str_id)
-	if err != nil {
-		fmt.Println(err)
-		retError(res, fmt.Sprintf("Tk DELETE id: Ошибка: %s\n", err.Error()), http.StatusOK)
+	id := req.URL.Query().Get("id")
+	if len(id) == 0 {
+		// нет id
+		retError(res, "Tk DELETE. Нет id", http.StatusOK)
 		return
 	}
-
-	//********************
-	/*
-		if len(id) == 0 {
-			// нет id
-			retError(res, "Tk DELETE. Нет id", http.StatusOK)
-			return
-		}
-		if _, err := strconv.Atoi(id); err != nil {
-			retError(res, "Tk DELETE. id не число", http.StatusOK)
-			return
-		}
-		if _, err := service.Service.Get(id); err != nil {
-			retError(res, fmt.Sprintf("Tk DELETE: id нет в базе. %s", err.Error()), http.StatusOK)
-			return
-		}
-	*/
+	if _, err := strconv.Atoi(id); err != nil {
+		retError(res, "Tk DELETE. id не число", http.StatusOK)
+		return
+	}
+	if _, err := service.Service.Get(id); err != nil {
+		retError(res, fmt.Sprintf("Tk DELETE: id нет в базе. %s", err.Error()), http.StatusOK)
+		return
+	}
 	// удалить по id
-	_, err = service.Service.Delete(id)
+	_, err := service.Service.Delete(id)
 	if err != nil {
 		retError(res, fmt.Sprintf("Tk DELETE: id: Ошибка удаления из базы: %s\n", err.Error()), http.StatusOK)
 		return
@@ -388,30 +359,18 @@ func TaskHandle(res http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "POST": // добавление задачи
 		TaskPOSTHandle(res, req)
-		/*
-			case "GET": // запрос для редактирование
-				TaskGETHandle(res, req)
-			case "PUT": // запрос на изменение
-				TaskPUTHandle(res, req)
-			case "DELETE": // удаление задачи
-				TaskDELETEHandle(res, req)
-		*/
+	case "GET": // запрос для редактирование
+		TaskGETHandle(res, req)
+	case "PUT": // запрос на изменение
+		TaskPUTHandle(res, req)
+	case "DELETE": // удаление задачи
+		TaskDELETEHandle(res, req)
 	}
 }
 
 func TaskDonePOSTHandle(res http.ResponseWriter, req *http.Request) {
 	// задача выполнена
-	//	id := req.URL.Query().Get("id")
-	//***************
-	str_id := req.URL.Query().Get("id")
-	id, err := strconv.Atoi(str_id)
-	if err != nil {
-		fmt.Println(err)
-		retError(res, fmt.Sprintf("Tk Done id: Ошибка: %s\n", err.Error()), http.StatusOK)
-		return
-	}
-
-	//***************
+	id := req.URL.Query().Get("id")
 	task, err := service.Service.Get(id)
 	if err != nil {
 		fmt.Println(err)
