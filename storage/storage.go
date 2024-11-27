@@ -8,6 +8,7 @@ import (
 
 	//_ "modernc.org/sqlite"
 	_ "github.com/lib/pq" // Импорт драйвера
+	//"github.com/bmaayandexru/go_final_project/tests"
 )
 
 type Task struct {
@@ -37,16 +38,12 @@ func (ts TaskStore) Add(task Task) (sql.Result, error) {
 }
 
 func (ts TaskStore) Delete(id string) (sql.Result, error) {
-	return ts.DB.Exec("DELETE FROM scheduler WHERE id = :id", sql.Named("id", id))
+	return ts.DB.Exec("DELETE FROM scheduler WHERE id = $1", id)
 }
 
 func (ts TaskStore) Find(search string) (*sql.Rows, error) {
 	// возвращаем всё если строка пустая
 	if len(search) == 0 {
-		/*
-			return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date LIMIT :limit",
-				sql.Named("limit", 50))
-		*/
 		return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date LIMIT $1", limit)
 	}
 	// парсим строку на дату
@@ -72,14 +69,6 @@ func (ts TaskStore) Get(id string) (Task, error) {
 }
 
 func (ts TaskStore) Update(task Task) (sql.Result, error) {
-	/*
-		return ts.DB.Exec("UPDATE scheduler SET  date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id",
-			sql.Named("id", task.ID),
-			sql.Named("date", task.Date),
-			sql.Named("title", task.Title),
-			sql.Named("comment", task.Comment),
-			sql.Named("repeat", task.Repeat))
-	*/
 	return ts.DB.Exec("UPDATE scheduler SET  date = $2, title = $3, comment = $4, repeat = $5 WHERE id = $1",
 		task.ID,
 		task.Date,
@@ -87,20 +76,6 @@ func (ts TaskStore) Update(task Task) (sql.Result, error) {
 		task.Comment,
 		task.Repeat)
 }
-
-/*
-var schemaSQL string = `
-CREATE TABLE scheduler (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date CHAR(8) NOT NULL DEFAULT "20000101",
-    title VARCHAR(32) NOT NULL DEFAULT "",
-    comment TEXT NOT NULL DEFAULT "",
-    repeat VARCHAR(128) NOT NULL DEFAULT ""
-);
-CREATE INDEX idx_date ON scheduler (date);
-CREATE INDEX idx_title ON scheduler (title);
-`
-*/
 
 var schemaSQL string = `
 CREATE TABLE IF NOT EXISTS scheduler (
@@ -114,37 +89,11 @@ CREATE INDEX IF NOT EXISTS idx_date ON scheduler (date);
 CREATE INDEX IF NOT EXISTS idx_title ON scheduler (title); 
 `
 
-var DBFileRun = "scheduler.db"
-
-func InitDBase() (*sql.DB, error) {
+func InitDBase(connStr string) (*sql.DB, error) {
 	var SqlDB *sql.DB
-	// var StrDBFile string
 	fmt.Println("Init Data Base...")
-	/*
-		envDBFile := os.Getenv("TODO_DBFILE")
-		if envDBFile == "" {
-			envDBFile = DBFileRun
-			//envDBFile = tests.DBFile
-		}
-		fmt.Println("Result DBFile ", envDBFile)
-		_, err := os.Stat(envDBFile)
-		install := (err != nil)
-		fmt.Println("Need install ", install)
-		StrDBFile = envDBFile
-		SqlDB, err = sql.Open("sqlite", StrDBFile)
-		if err != nil {
-			fmt.Println("InitDB err:", err)
-			return SqlDB, err
-		}
-		if install {
-			if _, err = SqlDB.Exec(schemaSQL); err != nil {
-				fmt.Println("InitDB err:", err)
-				// SqlDB = nil
-				return SqlDB, err
-			}
-		}
-	*/
-	connStr := "user=postgres password=password dbname=testdb sslmode=disable"
+	//	connStr := "user=postgres password=password dbname=dbscheduler sslmode=disable"
+	// connStr := tests.ConnStr
 	SqlDB, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatalf("Ошибка подключения: %v", err)

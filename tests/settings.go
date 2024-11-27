@@ -3,7 +3,7 @@ package tests
 var Port = 7540
 
 // путь к базе для тестов
-var DBFile = "../scheduler.db"
+var ConnStr = "user=postgres password=password dbname=dbscheduler sslmode=disable"
 
 var FullNextDate = true
 

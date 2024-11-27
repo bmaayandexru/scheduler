@@ -25,7 +25,7 @@ RUN chmod +x ./exefile
 EXPOSE 7540
 # окружение
 ENV TODO_PORT="7540"
-ENV TODO_DBFILE="scheduler.db"
+ENV TODO_CONNSTR="scheduler.db"
 ENV TODO_PASSWORD="12111"
 
 # запуск бинарника
