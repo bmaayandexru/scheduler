@@ -32,13 +32,18 @@ func NewTaskStore(db *sql.DB) TaskStore {
 	return TaskStore{DB: db}
 }
 
-func (ts TaskStore) Add(task Task) (sql.Result, error) {
-	return ts.DB.Exec("INSERT INTO scheduler(date, title, comment, repeat) VALUES ($1, $2, $3, $4) ",
+// storage не должен выдавать sql.Result только error
+// func (ts TaskStore) Add(task Task) (sql.Result, error) {
+func (ts TaskStore) Add(task Task) error {
+	_, err := ts.DB.Exec("INSERT INTO scheduler(date, title, comment, repeat) VALUES ($1, $2, $3, $4) ",
 		task.Date, task.Title, task.Comment, task.Repeat)
+	return err
 }
 
-func (ts TaskStore) Delete(id string) (sql.Result, error) {
-	return ts.DB.Exec("DELETE FROM scheduler WHERE id = $1", id)
+// func (ts TaskStore) Delete(id string) (sql.Result, error) {
+func (ts TaskStore) Delete(id string) error {
+	_, err := ts.DB.Exec("DELETE FROM scheduler WHERE id = $1", id)
+	return err
 }
 
 func (ts TaskStore) Find(search string) (*sql.Rows, error) {

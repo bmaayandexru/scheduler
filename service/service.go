@@ -20,11 +20,14 @@ func NewTaskService(store storage.TaskStore) TaskService {
 	return TaskService{store: store}
 }
 
-func (ts TaskService) Add(task storage.Task) (sql.Result, error) {
+// сервис не должен выдавать sql.Result. только error
+// func (ts TaskService) Add(task storage.Task) (sql.Result, error) {
+func (ts TaskService) Add(task storage.Task) error {
 	return ts.store.Add(task)
 }
 
-func (ts TaskService) Delete(id string) (sql.Result, error) {
+// func (ts TaskService) Delete(id string) (sql.Result, error) {
+func (ts TaskService) Delete(id string) error {
 	return ts.store.Delete(id)
 }
 
@@ -50,7 +53,7 @@ func (ts TaskService) Done(id string) error {
 	}
 	// если правила повторения нет удалить
 	if len(task.Repeat) == 0 {
-		_, err = ts.Delete(id)
+		err = ts.Delete(id)
 		return err
 	} else {
 		// если есть вызвать nextdate и перенести (update)

@@ -298,7 +298,7 @@ func TaskPOSTHandle(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 	//	resSql, err := service.Service.Add(task)
-	_, err = service.Service.Add(task)
+	err = service.Service.Add(task)
 	if err != nil {
 		retError(res, fmt.Sprintf("Ts POST: Ошибка при добавлении в БД: %v\n", err), http.StatusOK)
 		return
@@ -338,7 +338,7 @@ func TaskDELETEHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	// удалить по id
-	_, err := service.Service.Delete(id)
+	err := service.Service.Delete(id)
 	if err != nil {
 		retError(res, fmt.Sprintf("Tk DELETE: id: Ошибка удаления из базы: %s\n", err.Error()), http.StatusOK)
 		return
@@ -378,7 +378,7 @@ func TaskDonePOSTHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if len(task.Repeat) == 0 {
-		_, err = service.Service.Delete(task.ID)
+		err = service.Service.Delete(task.ID)
 		if err != nil {
 			retError(res, fmt.Sprintf("Tkd POST id: Ошибка удаления из базы: %s\n", err.Error()), http.StatusOK)
 			return
