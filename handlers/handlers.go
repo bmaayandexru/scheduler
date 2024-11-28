@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"time"
 
-	nd "github.com/bmaayandexru/go_final_project/nextdate"
-	"github.com/bmaayandexru/go_final_project/service"
-	"github.com/bmaayandexru/go_final_project/storage"
+	nd "github.com/bmaayandexru/scheduler/nextdate"
+	"github.com/bmaayandexru/scheduler/service"
+	"github.com/bmaayandexru/scheduler/storage"
 )
 
 // для формирования ошибки
@@ -75,28 +75,13 @@ func retError(res http.ResponseWriter, sErr string, statusCode int) {
 }
 
 func TasksGETSearch(res http.ResponseWriter, req *http.Request) {
+	var err error
 	search := req.URL.Query().Get("search")
 	// нашли строку
-	rows, err := service.Service.Find(search)
+	sTasks.Tasks, err = service.Service.Find(search)
 	if err != nil {
 		fmt.Println(err)
 		retError(res, fmt.Sprintf("Ts GET SS: Ошибка запроса: %s\n", err.Error()), http.StatusOK)
-		return
-	}
-	sTasks.Tasks = make([]storage.Task, 0)
-	for rows.Next() {
-		task := storage.Task{}
-		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
-		if err != nil {
-			fmt.Println(err)
-			retError(res, fmt.Sprintf("Ts GET SS: Ошибка rows.Scan(): %s\n", err.Error()), http.StatusOK)
-			return
-		}
-		sTasks.Tasks = append(sTasks.Tasks, task)
-	}
-	if err := rows.Err(); err != nil {
-		fmt.Println(err)
-		retError(res, fmt.Sprintf("Ts GET SS: Ошибка rows.Next(): %s\n", err.Error()), http.StatusOK)
 		return
 	}
 	arrBytes, err := json.Marshal(sTasks)
@@ -110,26 +95,11 @@ func TasksGETSearch(res http.ResponseWriter, req *http.Request) {
 }
 
 func TasksGETAllTasks(res http.ResponseWriter, req *http.Request) {
-	rows, err := service.Service.Find("")
+	var err error
+	sTasks.Tasks, err = service.Service.Find("")
 	if err != nil {
 		fmt.Println(err)
 		retError(res, fmt.Sprintf("Ts GET AT: Ошибка запроса: %s\n", err.Error()), http.StatusOK)
-		return
-	}
-	sTasks.Tasks = make([]storage.Task, 0)
-	for rows.Next() {
-		task := storage.Task{}
-		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
-		if err != nil {
-			fmt.Println(err)
-			retError(res, fmt.Sprintf("Ts GET AT: Ошибка rows.Scan(): %s\n", err.Error()), http.StatusOK)
-			return
-		}
-		sTasks.Tasks = append(sTasks.Tasks, task)
-	}
-	if err := rows.Err(); err != nil {
-		fmt.Println(err)
-		retError(res, fmt.Sprintf("Ts GET AT: Ошибка rows.Next(): %s\n", err.Error()), http.StatusOK)
 		return
 	}
 	arrBytes, err := json.Marshal(sTasks)
@@ -235,7 +205,7 @@ func TaskPUTHandle(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 	// Task перезаписать в базе
-	_, err = service.Service.Update(task)
+	err = service.Service.Update(task)
 	if err != nil {
 		retError(res, fmt.Sprintf("Tк PUT: Ошибка при изменении в БД: %v\n", err), http.StatusOK)
 		return
@@ -396,7 +366,7 @@ func TaskDonePOSTHandle(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		task.Date = newDate
-		if _, err = service.Service.Update(task); err != nil {
+		if err = service.Service.Update(task); err != nil {
 			retError(res, fmt.Sprintf("Tkd POST: Ошибка UpdateTask(): %s\n", err.Error()), http.StatusOK)
 			return
 		}

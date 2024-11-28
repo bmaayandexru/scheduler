@@ -8,7 +8,7 @@ import (
 
 	//_ "modernc.org/sqlite"
 	_ "github.com/lib/pq" // Импорт драйвера
-	//"github.com/bmaayandexru/go_final_project/tests"
+	//"github.com/bmaayandexru/scheduler/tests"
 )
 
 type Task struct {
@@ -46,24 +46,41 @@ func (ts TaskStore) Delete(id string) error {
 	return err
 }
 
-func (ts TaskStore) Find(search string) (*sql.Rows, error) {
+func (ts TaskStore) Find(search string) ([]Task, error) {
+	var (
+		err  error
+		rows *sql.Rows
+	)
+	tasks := make([]Task, 0)
 	// возвращаем всё если строка пустая
 	if len(search) == 0 {
-		return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date LIMIT $1", limit)
+		rows, err = ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date LIMIT $1", limit)
 	}
 	// парсим строку на дату
 	if date, err := time.Parse("02-01-2006", search); err == nil {
 		// дата есть
-		return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler WHERE date = $1 LIMIT $2",
+		rows, err = ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler WHERE date = $1 LIMIT $2",
 			date.Format(templ),
 			limit)
 	} else {
 		// даты нет
 		search = "%" + search + "%"
-		return ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler WHERE UPPER(title) LIKE UPPER($1) OR UPPER(comment) LIKE UPPER($1) ORDER BY date LIMIT $2",
+		rows, err = ts.DB.Query("SELECT id, date, title, comment, repeat FROM scheduler WHERE UPPER(title) LIKE UPPER($1) OR UPPER(comment) LIKE UPPER($1) ORDER BY date LIMIT $2",
 			search,
 			limit)
 	}
+	for rows.Next() {
+		task := Task{}
+		err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
+			return tasks, err
+		}
+		tasks = append(tasks, task)
+	}
+	if err := rows.Err(); err != nil {
+		return tasks, err
+	}
+	return tasks, err
 }
 
 func (ts TaskStore) Get(id string) (Task, error) {
@@ -73,13 +90,14 @@ func (ts TaskStore) Get(id string) (Task, error) {
 	return task, err
 }
 
-func (ts TaskStore) Update(task Task) (sql.Result, error) {
-	return ts.DB.Exec("UPDATE scheduler SET  date = $2, title = $3, comment = $4, repeat = $5 WHERE id = $1",
+func (ts TaskStore) Update(task Task) error {
+	_, err := ts.DB.Exec("UPDATE scheduler SET  date = $2, title = $3, comment = $4, repeat = $5 WHERE id = $1",
 		task.ID,
 		task.Date,
 		task.Title,
 		task.Comment,
 		task.Repeat)
+	return err
 }
 
 var schemaSQL string = `

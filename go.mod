@@ -1,4 +1,4 @@
-module github.com/bmaayandexru/go_final_project
+module github.com/bmaayandexru/scheduler
 
 go 1.22.0
 

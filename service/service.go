@@ -1,11 +1,10 @@
 package service
 
 import (
-	"database/sql"
 	"time"
 
-	"github.com/bmaayandexru/go_final_project/nextdate"
-	"github.com/bmaayandexru/go_final_project/storage"
+	"github.com/bmaayandexru/scheduler/nextdate"
+	"github.com/bmaayandexru/scheduler/storage"
 )
 
 type TaskService struct {
@@ -31,7 +30,7 @@ func (ts TaskService) Delete(id string) error {
 	return ts.store.Delete(id)
 }
 
-func (ts TaskService) Find(search string) (*sql.Rows, error) {
+func (ts TaskService) Find(search string) ([]storage.Task, error) {
 	return ts.store.Find(search)
 }
 
@@ -39,7 +38,7 @@ func (ts TaskService) Get(id string) (storage.Task, error) {
 	return ts.store.Get(id)
 }
 
-func (ts TaskService) Update(task storage.Task) (sql.Result, error) {
+func (ts TaskService) Update(task storage.Task) error {
 	return ts.store.Update(task)
 }
 
@@ -60,7 +59,7 @@ func (ts TaskService) Done(id string) error {
 		if task.Date, err = nextdate.NextDate(time.Now(), task.Date, task.Repeat); err != nil {
 			return err
 		}
-		if _, err = ts.Update(task); err != nil {
+		if err = ts.Update(task); err != nil {
 			return err
 		}
 		return nil

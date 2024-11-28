@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/bmaayandexru/go_final_project/handlers"
-	"github.com/bmaayandexru/go_final_project/service"
-	"github.com/bmaayandexru/go_final_project/storage"
-	"github.com/bmaayandexru/go_final_project/tests"
+	"github.com/bmaayandexru/scheduler/handlers"
+	"github.com/bmaayandexru/scheduler/service"
+	"github.com/bmaayandexru/scheduler/storage"
+	"github.com/bmaayandexru/scheduler/tests"
 )
 
 var (
